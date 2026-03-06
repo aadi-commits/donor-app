@@ -2,81 +2,70 @@ package com.donor.donorapp.controllers;
 
 import com.donor.donorapp.models.Role;
 import com.donor.donorapp.models.User;
+import com.donor.donorapp.repositories.UserRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
-    private List<User> users = new ArrayList<>();
-    private Long idCounter = 1L;
+    private final UserRepository userRepository;
+    public UserController(UserRepository userRepository){
+        this.userRepository = userRepository;
+    }
 
     @PostMapping
     public User createUser(@RequestBody User user){
-        for(User u : users){
-            if(u.getEmail().equalsIgnoreCase(user.getEmail())){
-                throw new RuntimeException("Email already exists.");
-            }
+        if(userRepository.existsByEmailIgnoreCase(user.getEmail())){
+            throw new RuntimeException("Email already exists.");
         }
-        user.setId(idCounter++);
+
         user.setRole(Role.USER);
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 
-        users.add(user);
-        return user;
+        return userRepository.save(user);
     }
 
     @GetMapping
     public List<User> getAllUsers(){
-        return users;
+        return userRepository.findAll();
     }
 
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Long id){
-        for(User user : users){
-            if(user.getId().equals(id)){
-                return user;
-            }
-        }
-        throw new RuntimeException("User not found.");
+
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found."));
     }
 
     @PutMapping("/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User updateUser){
 
-        for(User user : users){
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found."));
 
-            if(user.getId().equals(id)){
+        user.setFname(updateUser.getFname());
+        user.setLname(updateUser.getLname());
+        user.setEmail(updateUser.getEmail());
+        user.setPassword(updateUser.getPassword());
+        user.setUpdatedAt(LocalDateTime.now());
 
-                user.setFname(updateUser.getFname());
-                user.setLname(updateUser.getLname());
-                user.setEmail(updateUser.getEmail());
-                user.setPassword(updateUser.getPassword());
-                user.setUpdatedAt(LocalDateTime.now());
-
-                return user;
-            }
-        }
-
-        throw new RuntimeException("User not found.");
+        return userRepository.save(user);
     }
 
     @DeleteMapping("/{id}")
     public String deleteUser(@PathVariable Long id){
 
-        for(User user : users){
-
-            if(user.getId().equals(id)){
-                users.remove(user);
-                return "User deleted";
-            }
+        if(!userRepository.existsById(id)){
+            throw new RuntimeException("User not found");
         }
 
-        throw new RuntimeException("User not found");
+        userRepository.deleteById(id);
+
+        return "User deleted successfully";
     }
 }
