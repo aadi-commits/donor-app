@@ -1,5 +1,8 @@
 package com.donor.donorapp.controllers;
 
+import com.donor.donorapp.dto.UserRequestDto;
+import com.donor.donorapp.dto.UserResponseDto;
+import com.donor.donorapp.mapper.UserMapper;
 import com.donor.donorapp.models.User;
 import com.donor.donorapp.services.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -17,25 +20,33 @@ public class UserController {
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user){
-        return userService.createUser(user);
+    public UserResponseDto createUser(@RequestBody UserRequestDto request){
+        User user = UserMapper.toEntity(request);
+        User saveUser = userService.createUser(user);
+        return UserMapper.toDto(saveUser);
     }
 
     @GetMapping
-    public List<User> getAllUsers(){
-        return userService.getAllUsers();
+    public List<UserResponseDto> getAllUsers(){
+        List<User> users = userService.getAllUsers();
+        return users.stream()
+                .map(UserMapper::toDto)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id){
-
-        return userService.getUserById(id);
+    public UserResponseDto getUserById(@PathVariable Long id){
+        User user = userService.getUserById(id);
+        return UserMapper.toDto(user);
     }
 
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updateUser){
+    public UserResponseDto updateUser(@PathVariable Long id,
+                                      @RequestBody UserRequestDto request){
 
-        return userService.updateUser(id, updateUser);
+        User user = UserMapper.toEntity(request);
+        User updateUser = userService.updateUser(id, user);
+        return UserMapper.toDto(updateUser);
     }
 
     @DeleteMapping("/{id}")
