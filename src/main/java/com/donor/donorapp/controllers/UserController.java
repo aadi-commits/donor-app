@@ -1,71 +1,68 @@
 package com.donor.donorapp.controllers;
 
-import com.donor.donorapp.models.Role;
+import com.donor.donorapp.dto.UserRequestDto;
+import com.donor.donorapp.dto.UserResponseDto;
+import com.donor.donorapp.mapper.UserMapper;
 import com.donor.donorapp.models.User;
-import com.donor.donorapp.repositories.UserRepository;
+import com.donor.donorapp.services.UserService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
-    private final UserRepository userRepository;
-    public UserController(UserRepository userRepository){
-        this.userRepository = userRepository;
+
+    UserService userService;
+    public UserController(UserService userService){
+        this.userService = userService;
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user){
-        if(userRepository.existsByEmailIgnoreCase(user.getEmail())){
-            throw new RuntimeException("Email already exists.");
-        }
-
-        user.setRole(Role.USER);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-
-        return userRepository.save(user);
+    public UserResponseDto createUser(@Valid @RequestBody UserRequestDto request){
+        User user = UserMapper.toEntity(request);
+        User saveUser = userService.createUser(user);
+        return UserMapper.toDto(saveUser);
     }
 
     @GetMapping
-    public List<User> getAllUsers(){
-        return userRepository.findAll();
+    public Page<UserResponseDto> getAllUsers(
+            @RequestParam(required = false) String fname,
+            @RequestParam(required = false) String email,
+            Pageable pageable){
+        Page<User> users;
+
+        if(fname != null || email != null){
+            users = userService.searchUsers(fname, email, pageable);
+        }else {
+            users = userService.getAllUsers(pageable);
+        }
+
+        return users.map(UserMapper::toDto);
     }
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id){
-
-        return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found."));
+    public UserResponseDto getUserById(@PathVariable Long id){
+        User user = userService.getUserById(id);
+        return UserMapper.toDto(user);
     }
 
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updateUser){
+    public UserResponseDto updateUser(@PathVariable Long id,
+                                      @Valid @RequestBody UserRequestDto request){
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found."));
-
-        user.setFname(updateUser.getFname());
-        user.setLname(updateUser.getLname());
-        user.setEmail(updateUser.getEmail());
-        user.setPassword(updateUser.getPassword());
-        user.setUpdatedAt(LocalDateTime.now());
-
-        return userRepository.save(user);
+        User user = UserMapper.toEntity(request);
+        User updateUser = userService.updateUser(id, user);
+        return UserMapper.toDto(updateUser);
     }
 
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id){
+    public void deleteUser(@PathVariable Long id){
 
-        if(!userRepository.existsById(id)){
-            throw new RuntimeException("User not found");
-        }
-
-        userRepository.deleteById(id);
-
-        return "User deleted successfully";
+        userService.deleteUser(id);
     }
 }
