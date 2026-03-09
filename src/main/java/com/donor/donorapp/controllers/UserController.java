@@ -5,6 +5,7 @@ import com.donor.donorapp.dto.UserResponseDto;
 import com.donor.donorapp.mapper.UserMapper;
 import com.donor.donorapp.models.User;
 import com.donor.donorapp.services.UserService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponseDto createUser(@RequestBody UserRequestDto request){
+    public UserResponseDto createUser(@Valid @RequestBody UserRequestDto request){
         User user = UserMapper.toEntity(request);
         User saveUser = userService.createUser(user);
         return UserMapper.toDto(saveUser);
@@ -42,7 +43,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public UserResponseDto updateUser(@PathVariable Long id,
-                                      @RequestBody UserRequestDto request){
+                                      @Valid @RequestBody UserRequestDto request){
 
         User user = UserMapper.toEntity(request);
         User updateUser = userService.updateUser(id, user);
