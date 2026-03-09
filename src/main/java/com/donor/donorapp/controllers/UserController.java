@@ -30,8 +30,18 @@ public class UserController {
     }
 
     @GetMapping
-    public Page<UserResponseDto> getAllUsers(Pageable pageable){
-        Page<User> users = userService.getAllUsers(pageable);
+    public Page<UserResponseDto> getAllUsers(
+            @RequestParam(required = false) String fname,
+            @RequestParam(required = false) String email,
+            Pageable pageable){
+        Page<User> users;
+
+        if(fname != null || email != null){
+            users = userService.searchUsers(fname, email, pageable);
+        }else {
+            users = userService.getAllUsers(pageable);
+        }
+
         return users.map(UserMapper::toDto);
     }
 

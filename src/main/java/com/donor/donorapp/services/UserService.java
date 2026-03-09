@@ -9,6 +9,7 @@ public interface UserService {
     User createUser(User user);
 
     Page<User> getAllUsers(Pageable pageable);
+    Page<User> searchUsers(String fname, String email, Pageable pageable);
 
     User getUserById(Long id);
 

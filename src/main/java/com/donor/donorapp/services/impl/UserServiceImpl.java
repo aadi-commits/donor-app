@@ -5,8 +5,10 @@ import com.donor.donorapp.models.Role;
 import com.donor.donorapp.models.User;
 import com.donor.donorapp.repositories.UserRepository;
 import com.donor.donorapp.services.UserService;
+import com.donor.donorapp.specifications.UserSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +44,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Page<User> searchUsers(String fname, String email, Pageable pageable) {
+
+        Specification<User> spec = Specification.allOf();
+
+        if(fname != null && !fname.isBlank()){
+            spec = spec.and(UserSpecification.hasFirstName(fname));
+        }
+
+        if(email != null && !email.isBlank()){
+            spec = spec.and(UserSpecification.hasEmail(email));
+        }
+
+        return userRepository.findAll(spec, pageable);
+    }
+
+    @Override
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() ->
@@ -59,7 +77,9 @@ public class UserServiceImpl implements UserService {
         existingUser.setEmail(user.getEmail());
         existingUser.setUpdatedAt(LocalDateTime.now());
 
-        existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
+        if(user.getPassword() != null && !user.getPassword().isBlank()) {
+            existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
 
         return userRepository.save(existingUser);
     }
