@@ -3,18 +3,23 @@ package com.donor.donorapp.security;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-
-//import java.security.Key;
+import org.springframework.beans.factory.annotation.Value;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Service
 public class JwtService {
-    private final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    @Value("${jwt.secret}")
+    private String secret;
 
-    private final long jwtExpiration = 86400000; // 24 hours
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
+
 
     public String generateToken(String email, String role) {
 
@@ -23,14 +28,14 @@ public class JwtService {
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(secretKey)
+                .signWith(getSigningKey())
                 .compact();
 
     }
 
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(secretKey)
+                .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
