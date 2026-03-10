@@ -6,6 +6,7 @@ import com.donor.donorapp.mapper.UserMapper;
 import com.donor.donorapp.models.User;
 import com.donor.donorapp.services.UserService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,7 @@ public class UserController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponseDto createUser(@Valid @RequestBody UserRequestDto request){
         User user = UserMapper.toEntity(request);
         User saveUser = userService.createUser(user);
@@ -30,6 +32,7 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public Page<UserResponseDto> getAllUsers(
             @RequestParam(required = false) String fname,
             @RequestParam(required = false) String email,
@@ -46,12 +49,14 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponseDto getUserById(@PathVariable Long id){
         User user = userService.getUserById(id);
         return UserMapper.toDto(user);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponseDto updateUser(@PathVariable Long id,
                                       @Valid @RequestBody UserRequestDto request){
 
@@ -61,8 +66,16 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteUser(@PathVariable Long id){
 
         userService.deleteUser(id);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public String getCurrentUser() {
+
+        return "User profile visible";
     }
 }
