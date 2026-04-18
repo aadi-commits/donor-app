@@ -2,8 +2,8 @@ package com.donor.donorapp.models;
 
 public enum DonorCategory {
 
-    ALUMNI,
-    PARENT,
+    ORGANIZATION,
+    NGO,
     CORPORATE,
     INDIVIDUAL
 }

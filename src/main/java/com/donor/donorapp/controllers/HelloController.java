@@ -9,6 +9,6 @@ public class HelloController {
     @GetMapping("/hello")
     public String sayHello() {
 
-        return "Hello Donor APP";
+        return "Hello DonorApplication APP";
     }
 }
